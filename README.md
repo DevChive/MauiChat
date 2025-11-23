@@ -6,29 +6,27 @@ Chat page smaple built with .NET MAUI
 
 Learn how to create a simple chat page UI that could be used for real-time message exchange, with support for images.
 
-Press enter or click to view image in full size
-
 TLDR: Click here to check a fully working sample with support for Android, iOS and WinUI.
 
 ### Objective
+
 Create a chat like interaction, where we can send and receive images and text. Here are some ideas of what it could look like:
 
 <img width="720" height="700" alt="image" src="https://github.com/user-attachments/assets/f89473fd-af28-4b08-a219-09514e71c718" />
 
 <img width="720" height="762" alt="image" src="https://github.com/user-attachments/assets/760e8eb7-f0fb-4073-a507-463b785601ce" />
 
-
 ### Approach used and why I used it
+
 I tried reducing the external dependencies to a minimum, so I used the native controls offered out-of-the-box by .NET MAUI. I did however use the community toolkit nugets to be able to simplify the code and zoft.MauiExtensions.Core nuget package for some useful extensions.
 The initial project was created using the MAUI App Accelerator extension by Matt Lacey
 
 <img width="720" height="151" alt="image" src="https://github.com/user-attachments/assets/2e802f21-b2fe-489d-ac6c-2879b09f942c" />
 
-
 Nugets used in the project (MauiVersion => 8.0.80)
 In a first approach I though about using the CollectionView with the grouping feature but as it turned out, this approach works very well for Android, but has known UI rendering issues on iOS. To workaround this problem, I choose to use a single list of items, that contain 2 types of objects (MessageGroupand MessageItem)
 
-```
+```cs
 public class MessageGroup(string name)
 {
     public string Name { get; } = name;
@@ -60,14 +58,15 @@ Initial project structure
 
 
 I’ll skip the formalities of adding the backbone code and keep focused on the UI of the chat itself. You can take a look at the different components added, in the the github repo here. Here’s an overview of what was added:
+
 — Converters to help format the time.
 — Models that represent a message, a message group and a media item (image).
 — Services that provides a mocked logic for sending and receiving messages.
 — ViewModels to support the chat page functionality.
 — Views that contain all the UI implementation.
 
+### Final project structure
 
-## Final project structure
 Now let’s talk about the UI.
 The main piece will be the ChatPage. This page will have a CollectionView to show the messages. Bellow that list there will be an area for the controls to write a message, attach images and send the message. Finally at the bottom, there will be an area to show the images that are attached to the message that will be sent.
 
@@ -75,9 +74,9 @@ The main piece will be the ChatPage. This page will have a CollectionView to sho
 
 ### Messages List
 
-The CollectionView configuration will be quite simple. It will have a list of messages, bound to the ItemsSource and an ItemTemplate bound to a MessageTemplateSelector.
+The CollectionView configuration will be quite simple. It will have a list of messages, bound to the ItemsSource and an ItemTemplate bound to a `MessageTemplateSelector`.
 
-```
+```xaml
 <!-- Messages List -->
 <CollectionView x:Name="MessagesList" 
                 ItemsSource="{Binding GroupedMessages}"
@@ -89,8 +88,11 @@ The CollectionView configuration will be quite simple. It will have a list of me
                            ItemSpacing="5" />
     </CollectionView.ItemsLayout>
 </CollectionView>
-The MessageTemplateSelector will have 3 templates to choose from: MessageGroupTemplate, MessageSentTemplate and MessageReceivedTemplate.
+```
 
+The `MessageTemplateSelector` will have 3 templates to choose from: `MessageGroupTemplate`, `MessageSentTemplate` and `MessageReceivedTemplate`.
+
+```xaml
 <DataTemplate x:Key="MessageGroupHeaderTemplate">
     <v:MessageGroupHeaderTemplate/>
 </DataTemplate>
@@ -107,6 +109,9 @@ The MessageTemplateSelector will have 3 templates to choose from: MessageGroupTe
                            GroupHeader="{StaticResource MessageGroupHeaderTemplate}"
                            MessageSent="{StaticResource MessageSentTemplate}"
                            MessageReceived="{StaticResource MessageReceivedTemplate}" />
+```
+
+```cs
 public class MessageTemplateSelector : DataTemplateSelector
 {
     public DataTemplate GroupHeader { get; set; } = null!;
@@ -126,6 +131,9 @@ public class MessageTemplateSelector : DataTemplateSelector
         return ((MessageItem)item).IsMyMessage ? MessageSent : MessageReceived;
     }
 }
+```
+
+```xaml
 <!-- MessageGroupHeaderTemplate -->
 <Grid xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -285,9 +293,14 @@ public class MessageTemplateSelector : DataTemplateSelector
     </Grid>
     
 </Grid>
-Controls Area
+```
+
+
+### Controls Area
+
 This area provides the interaction controls to write a text message and to add attachments.
 
+```xaml
 <!-- Message Input -->
 <Grid Grid.Row="1"
       ColumnDefinitions="*,Auto"
@@ -349,9 +362,13 @@ This area provides the interaction controls to write a text message and to add a
                        IsRunning="True"
                        Grid.Column="1" />
 </Grid>
-Attachments
+```
+
+### Attachments
+
 This area will show a list of the attached images.
 
+```xaml
 <!-- Attachments List -->
 <Grid Grid.Row="2" RowDefinitions="Auto"
       IsEnabled="{Binding IsSendingMessage, Converter={StaticResource InvertedBoolConverter}}"
@@ -379,14 +396,16 @@ This area will show a list of the attached images.
 ```
 
 ### ScrollToBottom behaviour
+
 As an extra behavior, I also wanted to had the possibility to Scroll-To-Bottom. This interaction should be done via a button that is shown, when we’re not already at the bottom of the messages list.
 
 <img width="720" height="762" alt="image" src="https://github.com/user-attachments/assets/d4fa0b12-437f-43a6-8a17-7503958c2fb1" />
 
-
 ### Scroll-To-Bottom UI sample
+
 The button UI implementation is quite simple. We just show an ImageButton on top of the messages list.
 
+```xaml
 <!-- GoToBottom Button -->
 <ImageButton Grid.Row="0"
              Style="{StaticResource ScrollToBottomImageButtonStyle}"
@@ -398,9 +417,11 @@ The button UI implementation is quite simple. We just show an ImageButton on top
                          Size="{StaticResource FontIconDefaultSize}"/>
     </ImageButton.Source>
 </ImageButton>
+```
+
 To control the visibility and functionality of the button, we use the CollectionView.Scrolled event to check if the last item of the list is visible and act accordingly. We then use the CollectionView.ScrollTo method to force the list to show a specific item (in this case, the last one)
 
-
+```cs
 private void MessagesList_Scrolled(object? sender, ItemsViewScrolledEventArgs e)
 {
     ButtonScrollToBottom.IsVisible = e.LastVisibleItemIndex != ViewModel.GroupedMessages.Count - 1;
@@ -410,4 +431,6 @@ private void ButtonScrollToBottom_Clicked(object sender, EventArgs e)
 {
     MessagesList.ScrollTo(ViewModel.GroupedMessages.Count - 1);
 }
+```
+
 And that’s it! The chat page is ready to be used!
