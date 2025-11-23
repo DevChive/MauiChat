@@ -4,6 +4,9 @@ Chat page smaple built with .NET MAUI
 
 ## Article Preservation
 
+* Date: Aug 19, 2024
+* Author: José Pereira
+
 Learn how to create a simple chat page UI that could be used for real-time message exchange, with support for images.
 
 TLDR: Click here to check a fully working sample with support for Android, iOS and WinUI.
